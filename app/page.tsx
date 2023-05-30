@@ -30,6 +30,24 @@ export default function Home() {
   const submitRequest = (event: any) => {
     event.preventDefault();
 
+    const sqlInjectionRegex = /(\b(ALTER|CREATE|DELETE|DROP|EXEC(UTE){0,1}|INSERT( +INTO){0,1}|MERGE|SELECT|UPDATE( +TOP){0,1})\b|\b(AND|OR)\b)/i;
+    // Check for SQL injection in first name
+    if (sqlInjectionRegex.test(infos.firstname)) {
+      alert('Invalid first name');
+      return;
+    }   
+    // Check for SQL injection in last name
+    if (sqlInjectionRegex.test(infos.lastname)) {
+      alert('Invalid last name');
+      return;
+    }   
+    // Check for SQL injection in email
+    if (sqlInjectionRegex.test(infos.email)) {
+      alert('Invalid email');
+      return;
+    }
+
+    console.log('Send to backend');
     return;
   }
 
