@@ -1,7 +1,7 @@
 "use client";
 
 import booksData from '@/booksData';
-import { Book } from '@/classes/Book';
+import { Book, User } from '@/classes/Book';
 import { useState } from 'react';
 import DatePicker from "react-datepicker";
 import { MdKeyboardArrowDown, MdKeyboardArrowUp } from "react-icons/md";
@@ -10,7 +10,7 @@ import axios from "axios";
 import "react-datepicker/dist/react-datepicker.css";
 
 export default function Home() {
-  const [borrowedBooks, setBorrowedBooks] = useState<Book[]>([]);
+  const [borrowedBooks, setBorrowedBooks] = useState<User[]>([]);
 
   const [infos, setInfos] = useState({
     firstname: "",
@@ -20,7 +20,7 @@ export default function Home() {
   const [email, setEmail] = useState<string>("");
   const [startDate, setStartDate] = useState<Date>();
   const [endDate, setEndDate] = useState<Date>();
-
+  
   const options = booksData;
   const [isOpen, setIsOpen] = useState(false);
   const [selectedOption, setSelectedOption] = useState({ id: 0, name: '-- Select --' });
@@ -72,6 +72,13 @@ export default function Home() {
   const searchBooks = async (event: any) => {
     event.preventDefault();
 
+    const sqlInjectionRegex = /(\b(ALTER|CREATE|DELETE|DROP|EXEC(UTE){0,1}|INSERT( +INTO){0,1}|MERGE|SELECT|UPDATE( +TOP){0,1})\b|\b(AND|OR)\b)/i;
+     // Check for SQL injection in email
+     if (email.length === 0 || sqlInjectionRegex.test(email)) {
+      alert('Invalid email');
+      return;
+    }
+
     try {
       const response = await axios.post('http://localhost:8080/customers/unsecured/borrows', {
         email: email
@@ -82,10 +89,12 @@ export default function Home() {
     }
   }
 
+  console.log(borrowedBooks)
+
   return (
     <div className="flex flex-col justify-start items-center w-full">
       <h1 className="text-3xl font-black font-mono uppercase py-8 ">Welcome to your Bookstore</h1>
-      <div className="flex justify-between items-center w-full">
+      <div className="flex justify-between items-start w-full">
         <div className="w-full flex flex-col justify-center items-center p-8">
           <form className="w-full max-w-lg py-8">
             <div className="flex flex-wrap -mx-3 mb-6">
@@ -100,7 +109,7 @@ export default function Home() {
                   value={infos.firstname}
                   onChange={(event) => setInfos({ ...infos, [event.target.name]: event.target.value })}
                   type="text"
-                  placeholder="Jane"
+                  placeholder="First name"
                 />
               </div>
               <div className="w-full md:w-1/2 px-3">
@@ -114,7 +123,7 @@ export default function Home() {
                   value={infos.lastname}
                   onChange={(event) => setInfos({ ...infos, [event.target.name]: event.target.value })}
                   type="text"
-                  placeholder="Doe"
+                  placeholder="Last name"
                 />
               </div>
             </div>
@@ -171,7 +180,7 @@ export default function Home() {
                       </div>
                     )}
                   </div>
-                  <div className={"pointer-events-none absolute flex items-start px-2 text-gray-700 " + (selectedOption.name === "-- Select --" ? "inset-y-4 right-2" : "inset-y-7 right-3")}>
+                  <div className="pointer-events-none absolute flex items-start px-2 text-gray-700 inset-y-4 right-2">
                     {isOpen
                       ? <MdKeyboardArrowUp />
                       : <MdKeyboardArrowDown />}
@@ -212,7 +221,7 @@ export default function Home() {
             </div>
           </form >
         </div>
-        <div className="w-full flex flex-col justify-center items-center p-8">
+        <div className="w-full flex flex-col justify-start items-center p-8">
           <form className="w-full max-w-lg py-8 ">
             <div className="flex flex-wrap flex-col justify-center items-center -mx-3 mb-6">
               <div className="w-full md:w-1/2 px-3 mb-6 md:mb-0">
@@ -233,16 +242,16 @@ export default function Home() {
               borrowedBooks.map(book => {
                 return (
                   <div
-                    key={book.id}
-                    className="flex justify-start items-center gap-2 p-2 bg-gray-100 hover:bg-gray-300"
+                    key={book.book.id}
+                    className="flex justify-start items-center gap-2 p-2 bg-gray-200 hover:bg-gray-300 rounded-md my-1"
                   >
                     <div className="flex justify-start items-center">
-                      <span className='font-semibold'>{book.name}</span>
+                      <span className='font-semibold'>{book.book.name}</span>
                     </div>
                   </div>
                 )
               })}
-            <div className="w-full flex justify-center items-center">
+            <div className="w-full flex justify-center items-center my-4">
               <button onClick={searchBooks} className='text-white font-mono uppercase bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium rounded-full text-lg px-5 py-2.5 mr-2 mb-2'>
                 Search
               </button>
