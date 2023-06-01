@@ -4,8 +4,8 @@ export interface Book {
 }
 
 export interface User {
-  firstname: string;
-  lastname: string;
+  firstName: string;
+  lastName: string;
   email: string;
   book: Book;
   startDate: Date;

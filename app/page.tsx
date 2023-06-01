@@ -18,13 +18,13 @@ export default function Home() {
   const [borrowedBooks, setBorrowedBooks] = useState<User[]>([]);
 
   const [infos, setInfos] = useState({
-    firstname: "",
-    lastname: "",
+    firstName: "",
+    lastName: "",
     email: ""
   });
   const [email, setEmail] = useState<string>("");
-  const [startDate, setStartDate] = useState<Date>();
-  const [endDate, setEndDate] = useState<Date>();
+  const [startDate, setStartDate] = useState<Date | null>();
+  const [endDate, setEndDate] = useState<Date | null>();
 
   const options = booksData;
   const [isOpen, setIsOpen] = useState(false);
@@ -40,12 +40,12 @@ export default function Home() {
 
     if (isSqlInjnectionFilter) {
       // Check for SQL injection in first name
-      if (infos.firstname.length === 0 || textBlockRegex.test(infos.firstname) || sqlStatementRegex.test(infos.firstname)) {
+      if (infos.firstName.length === 0 || textBlockRegex.test(infos.firstName) || sqlStatementRegex.test(infos.firstName)) {
         alert('Invalid first name');
         return;
       }
       // Check for SQL injection in last name
-      if (infos.lastname.length === 0 || textBlockRegex.test(infos.lastname) || sqlStatementRegex.test(infos.lastname)) {
+      if (infos.lastName.length === 0 || textBlockRegex.test(infos.lastName) || sqlStatementRegex.test(infos.lastName)) {
         alert('Invalid last name');
         return;
       }
@@ -59,8 +59,8 @@ export default function Home() {
     if (selectedOption.name !== "-- Select --" && startDate && endDate) {
       try {
         await axios.post('http://localhost:8080/customers/unsecured', {
-          firstName: infos.firstname,
-          lastName: infos.lastname,
+          firstName: infos.firstName,
+          lastName: infos.lastName,
           email: infos.email,
           book: {
             name: selectedOption.name,
@@ -78,7 +78,7 @@ export default function Home() {
   const searchBooks = async (event: any) => {
     event.preventDefault();
 
-    
+
     if (isSqlInjnectionFilter) {
       // Check for SQL injection in email
       if (email.length === 0 || textBlockRegex.test(email) || sqlStatementRegex.test(email)) {
@@ -97,6 +97,8 @@ export default function Home() {
     }
   }
 
+  console.log(borrowedBooks)
+
   return (
     <div className="flex flex-col justify-start items-center w-full">
       <h1 className="text-3xl font-black font-mono uppercase py-8 ">Welcome to your Bookstore</h1>
@@ -110,9 +112,9 @@ export default function Home() {
                 </label>
                 <input
                   className="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white"
-                  id="firstname"
-                  name="firstname"
-                  value={infos.firstname}
+                  id="firstName"
+                  name="firstName"
+                  value={infos.firstName}
                   onChange={(event) => setInfos({ ...infos, [event.target.name]: event.target.value })}
                   type="text"
                   placeholder="First name"
@@ -124,9 +126,9 @@ export default function Home() {
                 </label>
                 <input
                   className="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
-                  id="lastname"
-                  name="lastname"
-                  value={infos.lastname}
+                  id="lastName"
+                  name="lastName"
+                  value={infos.lastName}
                   onChange={(event) => setInfos({ ...infos, [event.target.name]: event.target.value })}
                   type="text"
                   placeholder="Last name"
@@ -155,7 +157,7 @@ export default function Home() {
                   Book
                 </label>
                 <div className="relative select-none cursor-pointer">
-                  <div className="">
+                  <div className="w-full">
                     <div onClick={() => setIsOpen(!isOpen)} className="block appearance-none w-full bg-gray-200 border border-gray-200 text-gray-700 py-3 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500">
                       {selectedOption.name !== "-- Select --"
                         ? <div className="flex justify-start items-center gap-2">
@@ -167,11 +169,11 @@ export default function Home() {
                       }
                     </div>
                     {isOpen && (
-                      <div className="text-gray-700">
+                      <div className="absolute flex flex-col justify-start items-start w-full text-gray-700 max-h-48 overflow-y-auto bg-white z-50">
                         {options.map((option) => (
                           <div
                             key={option.name}
-                            className={"flex justify-start items-center gap-2 p-2 " + (option.name === selectedOption.name ? "bg-gray-300" : "bg-gray-100 hover:bg-gray-300")}
+                            className={"flex justify-start items-center gap-2 p-3 w-full " + (option.name === selectedOption.name ? "bg-gray-300" : "bg-gray-100 hover:bg-gray-300")}
                             onClick={() => {
                               handleOptionChange(option)
                               setIsOpen(false)
@@ -245,18 +247,47 @@ export default function Home() {
               </div>
             </div>
             {borrowedBooks.length > 0 &&
-              borrowedBooks.map(book => {
-                return (
-                  <div
-                    key={book.book.id}
-                    className="flex justify-start items-center gap-2 p-2 bg-gray-200 hover:bg-gray-300 rounded-md my-1"
-                  >
-                    <div className="flex justify-start items-center">
-                      <span className='font-semibold'>{book.book.name}</span>
-                    </div>
-                  </div>
-                )
-              })}
+
+              <div className="relative overflow-x-auto">
+                <table className="w-full text-sm text-left text-gray-500">
+                  <thead className="text-xs text-gray-700 uppercase bg-gray-50">
+                    <tr>
+                      <th scope="col" className="px-6 py-3">
+                        Book name
+                      </th>
+                      <th scope="col" className="px-6 py-3">
+                        Email
+                      </th>
+                      <th scope="col" className="px-6 py-3">
+                        First Name
+                      </th>
+                      <th scope="col" className="px-6 py-3">
+                        Last Name
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {borrowedBooks.map(book => {
+                      return (
+                        <tr key={book.book.id} className="bg-white border-b">
+                          <th scope="row" className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">
+                            {book.book.name}
+                          </th>
+                          <td className="px-6 py-4">
+                            {book.email}
+                          </td>
+                          <td className="px-6 py-4">
+                            {book.firstName}
+                          </td>
+                          <td className="px-6 py-4">
+                            {book.lastName}
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>}
             <div className="w-full flex justify-center items-center my-4">
               <button onClick={searchBooks} className='text-white font-mono uppercase bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium rounded-full text-lg px-5 py-2.5 mr-2 mb-2'>
                 Search
