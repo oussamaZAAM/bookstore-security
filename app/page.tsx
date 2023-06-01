@@ -9,6 +9,11 @@ import axios from "axios";
 
 import "react-datepicker/dist/react-datepicker.css";
 
+const isSqlInjnectionFilter = false;
+
+const textBlockRegex = /'(''|[^'])*'/i;
+const sqlStatementRegex = /(\b(ALTER|CREATE|DELETE|DROP|EXEC(UTE){0,1}|INSERT( +INTO){0,1}|MERGE|SELECT|UPDATE( +TOP){0,1})\b|\b(AND|OR)\b)/i;
+
 export default function Home() {
   const [borrowedBooks, setBorrowedBooks] = useState<User[]>([]);
 
@@ -20,7 +25,7 @@ export default function Home() {
   const [email, setEmail] = useState<string>("");
   const [startDate, setStartDate] = useState<Date>();
   const [endDate, setEndDate] = useState<Date>();
-  
+
   const options = booksData;
   const [isOpen, setIsOpen] = useState(false);
   const [selectedOption, setSelectedOption] = useState({ id: 0, name: '-- Select --' });
@@ -33,21 +38,22 @@ export default function Home() {
     event.preventDefault();
 
 
-    const sqlInjectionRegex = /(\b(ALTER|CREATE|DELETE|DROP|EXEC(UTE){0,1}|INSERT( +INTO){0,1}|MERGE|SELECT|UPDATE( +TOP){0,1})\b|\b(AND|OR)\b)/i;
-    // Check for SQL injection in first name
-    if (infos.firstname.length === 0 || sqlInjectionRegex.test(infos.firstname)) {
-      alert('Invalid first name');
-      return;
-    }
-    // Check for SQL injection in last name
-    if (infos.lastname.length === 0 || sqlInjectionRegex.test(infos.lastname)) {
-      alert('Invalid last name');
-      return;
-    }
-    // Check for SQL injection in email
-    if (infos.email.length === 0 || sqlInjectionRegex.test(infos.email)) {
-      alert('Invalid email');
-      return;
+    if (isSqlInjnectionFilter) {
+      // Check for SQL injection in first name
+      if (infos.firstname.length === 0 || textBlockRegex.test(infos.firstname) || sqlStatementRegex.test(infos.firstname)) {
+        alert('Invalid first name');
+        return;
+      }
+      // Check for SQL injection in last name
+      if (infos.lastname.length === 0 || textBlockRegex.test(infos.lastname) || sqlStatementRegex.test(infos.lastname)) {
+        alert('Invalid last name');
+        return;
+      }
+      // Check for SQL injection in email
+      if (infos.email.length === 0 || textBlockRegex.test(infos.email) || sqlStatementRegex.test(infos.email)) {
+        alert('Invalid email');
+        return;
+      }
     }
 
     if (selectedOption.name !== "-- Select --" && startDate && endDate) {
@@ -72,11 +78,13 @@ export default function Home() {
   const searchBooks = async (event: any) => {
     event.preventDefault();
 
-    const sqlInjectionRegex = /(\b(ALTER|CREATE|DELETE|DROP|EXEC(UTE){0,1}|INSERT( +INTO){0,1}|MERGE|SELECT|UPDATE( +TOP){0,1})\b|\b(AND|OR)\b)/i;
-     // Check for SQL injection in email
-     if (email.length === 0 || sqlInjectionRegex.test(email)) {
-      alert('Invalid email');
-      return;
+    
+    if (isSqlInjnectionFilter) {
+      // Check for SQL injection in email
+      if (email.length === 0 || textBlockRegex.test(email) || sqlStatementRegex.test(email)) {
+        alert('Invalid email');
+        return;
+      }
     }
 
     try {
@@ -88,8 +96,6 @@ export default function Home() {
       console.error('Error fetching data:', error);
     }
   }
-
-  console.log(borrowedBooks)
 
   return (
     <div className="flex flex-col justify-start items-center w-full">
